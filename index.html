@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CertiFlow — Bulk Certificate Generator</title>
+    <meta name="description" content="Create once. Certify everyone. Professional browser-based bulk certificate generator with native 1448x1086 resolution support." />
+    <meta property="og:title" content="CertiFlow — Bulk Certificate Generator" />
+    <meta property="og:description" content="Create once. Certify everyone. Generate and download bulk certificates as a ZIP file instantly." />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/style.css" />
+
+    <!-- CDN Libraries -->
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/file-saver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- PapaParse (CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+    </script>
+  </head>
+  <body>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand-section">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQxuhUt7s_RZp1NnZ9VOfsOU7i68H5W7VphW2Y1lK57g&s" alt="CertiFlow Logo" class="app-logo-img" referrerpolicy="no-referrer" />
+          <div class="brand-info">
+            <h1>CertiFlow <span class="brand-badge">Bulk Edition</span></h1>
+            <p>Create once. Certify everyone.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="privacy-badge">
+            🔒 <span>Your data stays on your device</span>
+          </div>
+          <button class="btn btn-outline btn-sm" id="loadDemoDataBtn">
+            ⚡ Load CodeUdaan Demo
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="app-container">
+
+      <!-- Step Indicator Bar -->
+      <nav class="step-navigation">
+        <ol class="step-list">
+          <li class="step-item active" data-step="1">
+            <span class="step-number">01</span>
+            <span>Template</span>
+          </li>
+          <span class="step-divider">→</span>
+          <li class="step-item" data-step="2">
+            <span class="step-number">02</span>
+            <span>Name Position</span>
+          </li>
+          <span class="step-divider">→</span>
+          <li class="step-item" data-step="3">
+            <span class="step-number">03</span>
+            <span>Students</span>
+          </li>
+          <span class="step-divider">→</span>
+          <li class="step-item" data-step="4">
+            <span class="step-number">04</span>
+            <span>Generate</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Main Workspace Grid -->
+      <div class="workspace-grid">
+
+        <!-- Left Controls Panel -->
+        <div class="control-panel">
+
+          <!-- STEP 1: Upload Certificate -->
+          <div class="card step-card" data-step="1">
+            <div class="card-title">
+              <span>📄 Upload Certificate Template</span>
+            </div>
+            <p class="card-subtitle">Select your certificate background image or document.</p>
+
+            <div class="dropzone" id="templateDropzone">
+              <div class="dropzone-icon">📄</div>
+              <div class="dropzone-text">
+                <h3>Upload Certificate</h3>
+                <p>Drag &amp; drop your certificate or click to browse</p>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" id="browseTemplateBtn">
+                Choose Certificate
+              </button>
+              <div class="format-tags">
+                <span>PNG</span> • <span>JPG</span> • <span>JPEG</span> • <span>PDF</span>
+              </div>
+              <input type="file" id="templateFileInput" accept="image/png, image/jpeg, image/jpg, application/pdf" style="display: none;" />
+            </div>
+
+            <!-- Active Loaded Template Info -->
+            <div class="template-info-bar" id="activeTemplateBar" style="display: none; margin-top: 1rem;">
+              <div class="template-details">
+                <img id="activeTemplateThumb" class="template-mini-thumb" alt="Thumb" />
+                <div class="template-meta">
+                  <h4 id="activeTemplateName">Template.png</h4>
+                  <p id="activeTemplateDims">1920 × 1080 px</p>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('templateFileInput').click()">Change</button>
+            </div>
+
+            <!-- Sample Templates Quick Picker -->
+            <div class="sample-templates">
+              <span class="form-label">Or choose a sample template:</span>
+              <div class="sample-grid">
+                <div class="sample-card" data-theme="academic">
+                  <div class="sample-thumb" style="background: #FAF9F6; border: 1px solid #D4AF37;"></div>
+                  <div class="sample-title">Academic Gold (1920×1080)</div>
+                </div>
+                <div class="sample-card" data-theme="tech">
+                  <div class="sample-thumb" style="background: #FFFFFF; border: 1px solid #4F46E5;"></div>
+                  <div class="sample-title">Tech Corporate (1600×1200)</div>
+                </div>
+                <div class="sample-card" data-theme="portrait">
+                  <div class="sample-thumb" style="background: #FAF9F6; border: 1px solid #D4AF37; height: 38px; width: 28px; margin: 0 auto;"></div>
+                  <div class="sample-title">Portrait Honor (1200×1600)</div>
+                </div>
+                <div class="sample-card" data-theme="minimal">
+                  <div class="sample-thumb" style="background: #F8FAFC; border: 1px solid #0F172A;"></div>
+                  <div class="sample-title">Minimalist (1800×1200)</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: right;">
+              <button class="btn btn-primary btn-lg" onclick="goToStep(2)">
+                Next: Position Name →
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Position Name Controls -->
+          <div class="card step-card" data-step="2" style="display: none;">
+            <div class="card-title">
+              <span>✍️ Student Name Formatting</span>
+            </div>
+            <p class="card-subtitle">Drag the name box on the certificate preview to position it.</p>
+
+            <div class="form-group">
+              <label class="form-label" for="fontFamilySelect">Font Family</label>
+              <select class="form-select" id="fontFamilySelect">
+                <option value="Poppins" selected>Poppins (Sans-serif)</option>
+                <option value="Playfair Display">Playfair Display (Serif)</option>
+                <option value="Cinzel">Cinzel (Classic Royal)</option>
+                <option value="Montserrat">Montserrat (Modern)</option>
+                <option value="Great Vibes">Great Vibes (Calligraphy Cursive)</option>
+                <option value="Dancing Script">Dancing Script (Handwritten)</option>
+                <option value="Alex Brush">Alex Brush (Script)</option>
+                <option value="Cormorant Garamond">Cormorant Garamond (Elegance)</option>
+                <option value="Inter">Inter (Clean)</option>
+                <option value="Roboto">Roboto (Standard)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Font Size (px)</label>
+              <div class="range-group">
+                <input type="range" class="range-slider" id="fontSizeSlider" min="16" max="120" value="46" />
+                <input type="number" class="form-control range-number" id="fontSizeInput" min="16" max="120" value="46" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Alignment</label>
+              <div class="alignment-toggle">
+                <button type="button" class="toggle-btn align-btn" data-align="left">Left</button>
+                <button type="button" class="toggle-btn align-btn active" data-align="center">Center</button>
+                <button type="button" class="toggle-btn align-btn" data-align="right">Right</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Text Color</label>
+              <div class="color-picker-group">
+                <div class="color-input-wrapper">
+                  <input type="color" id="textColorPicker" value="#1E293B" />
+                </div>
+                <input type="text" class="form-control" id="textColorHex" value="#1E293B" style="width: 100px;" />
+                <div class="color-presets">
+                  <div class="color-swatch" data-color="#0F172A" style="background: #0F172A;" title="Charcoal"></div>
+                  <div class="color-swatch" data-color="#1E3A8A" style="background: #1E3A8A;" title="Navy Blue"></div>
+                  <div class="color-swatch" data-color="#B38728" style="background: #B38728;" title="Gold"></div>
+                  <div class="color-swatch" data-color="#991B1B" style="background: #991B1B;" title="Crimson"></div>
+                  <div class="color-swatch" data-color="#065F46" style="background: #065F46;" title="Emerald"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Font Weight</label>
+              <select class="form-select" id="fontWeightSelect">
+                <option value="400">Regular (400)</option>
+                <option value="600">SemiBold (600)</option>
+                <option value="700" selected>Bold (700)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Sample Preview Text</label>
+              <input type="text" class="form-control" id="sampleNameInput" value="Rahul Sharma" placeholder="Type a sample name..." />
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 0.5rem;">
+              <button type="button" class="btn btn-secondary btn-sm" id="centerHBtn" style="flex:1;">Center Horizontally</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="centerVBtn" style="flex:1;">Center Vertically</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+              <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+              <button class="btn btn-primary" onclick="goToStep(3)">Next: Add Students →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Student Names -->
+          <div class="card step-card" data-step="3" style="display: none;">
+            <div class="card-title">
+              <span>👥 Student List</span>
+              <span class="student-count-badge" id="studentCountBadge">0 Loaded</span>
+            </div>
+            <p class="card-subtitle">Paste student names or import a CSV file (Maximum 223 certificates per batch).</p>
+
+            <div class="tabs-header">
+              <button type="button" class="tab-btn active" data-tab="pasteTab">Paste Names</button>
+              <button type="button" class="tab-btn" data-tab="csvTab">Upload CSV</button>
+            </div>
+
+            <div class="tab-content active" id="pasteTab">
+              <div class="form-group">
+                <label class="form-label" for="pasteStudentNames">Enter Names (One per line)</label>
+                <textarea class="form-control" id="pasteStudentNames" placeholder="Rahul Sharma&#10;Priya Das&#10;Aman Kumar&#10;Sneha Patel&#10;Rohit Singh"></textarea>
+              </div>
+            </div>
+
+            <div class="tab-content" id="csvTab">
+              <div class="dropzone" style="padding: 1.5rem 1rem;">
+                <div style="font-size: 1.75rem;">📊</div>
+                <div class="dropzone-text">
+                  <h3>Upload CSV File</h3>
+                  <p>CSV must contain a column for student names.</p>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="uploadCsvBtn">Select CSV File</button>
+                <input type="file" id="csvFileInput" accept=".csv" style="display: none;" />
+              </div>
+            </div>
+
+            <!-- Single Add & Table -->
+            <div class="form-group" style="margin-top: 1rem;">
+              <label class="form-label">Add Single Student</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" class="form-control" id="newStudentInput" placeholder="Enter student name..." />
+                <button type="button" class="btn btn-secondary" id="addStudentBtn">+ Add</button>
+              </div>
+            </div>
+
+            <div class="table-container" style="margin-top: 1rem;">
+              <table class="student-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+              <button type="button" class="btn btn-danger btn-sm" id="clearAllStudentsBtn">Clear All</button>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+                <button class="btn btn-primary" onclick="goToStep(4)">Next: Generate →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Summary & Generate -->
+          <div class="card step-card" data-step="4" style="display: none;">
+            <div class="card-title">
+              <span>🚀 Ready to Generate</span>
+            </div>
+            <p class="card-subtitle">Review your setup before generating certificates in bulk.</p>
+
+            <div class="summary-list">
+              <div class="summary-item">
+                <div class="summary-left">
+                  <div class="summary-icon">✓</div>
+                  <div class="summary-text">
+                    <h5>Certificate Template</h5>
+                    <p id="summaryTemplateStatus">✓ Uploaded</p>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="goToStep(1)">Edit</button>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-left">
+                  <div class="summary-icon">✓</div>
+                  <div class="summary-text">
+                    <h5>Name Position &amp; Style</h5>
+                    <p id="summaryPositionStatus">✓ Configured</p>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="goToStep(2)">Edit</button>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-left">
+                  <div class="summary-icon">✓</div>
+                  <div class="summary-text">
+                    <h5>Student Names</h5>
+                    <p id="summaryStudentsStatus">✓ 5 Students Loaded</p>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="goToStep(3)">Edit</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="outputFormatSelect">Output Format</label>
+              <select class="form-select" id="outputFormatSelect">
+                <option value="pdf" selected>PDF Documents (.pdf inside ZIP)</option>
+                <option value="png">PNG Images (.png inside ZIP)</option>
+              </select>
+            </div>
+
+            <div style="margin-top: 2rem;">
+              <button class="btn btn-primary btn-lg" id="startGenerationBtn" style="width: 100%;">
+                ✨ Generate Certificates
+              </button>
+            </div>
+
+            <div style="margin-top: 1rem; text-align: center;">
+              <button class="btn btn-secondary btn-sm" onclick="goToStep(3)">← Back to Student List</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Side: Certificate Preview & Canvas Editor -->
+        <div class="preview-panel">
+          <div class="preview-card">
+            <div class="preview-header">
+              <h3 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; margin: 0;">Live Certificate Preview</h3>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--text-muted);">
+                  <label for="previewStudentSelect" style="font-size: 0.75rem; font-weight: 600; color: var(--text-color); white-space: nowrap;">Preview Student:</label>
+                  <select id="previewStudentSelect" class="form-select" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; height: auto; min-width: 140px;">
+                    <!-- Populated via JS -->
+                  </select>
+                </div>
+                <span id="coordsDisplay" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; white-space: nowrap;">
+                  X: 50%, Y: 61%
+                </span>
+              </div>
+            </div>
+
+            <div class="canvas-viewport-container">
+              <!-- Canvas Wrapper for Draggable Overlay -->
+              <div class="canvas-wrapper certificate-wrap" id="canvasWrapper">
+                <canvas id="certificateCanvas"></canvas>
+
+                <!-- Interactive Name Box Overlay -->
+                <div class="name-box-overlay" id="nameBoxOverlay">
+                  <span class="name-box-label">Student Name Position</span>
+                  <div class="name-box-text" id="nameBoxText">Rahul Sharma</div>
+
+                  <!-- Resize Handles -->
+                  <div class="resize-handle handle-nw" data-handle="nw"></div>
+                  <div class="resize-handle handle-ne" data-handle="ne"></div>
+                  <div class="resize-handle handle-sw" data-handle="sw"></div>
+                  <div class="resize-handle handle-se" data-handle="se"></div>
+                  <div class="resize-handle handle-n" data-handle="n"></div>
+                  <div class="resize-handle handle-s" data-handle="s"></div>
+                  <div class="resize-handle handle-w" data-handle="w"></div>
+                  <div class="resize-handle handle-e" data-handle="e"></div>
+                </div>
+              </div>
+
+              <div class="empty-canvas-state" id="emptyCanvasState" style="display: none;">
+                <div class="empty-canvas-icon">📜</div>
+                <h4>No Template Uploaded</h4>
+                <p>Upload a certificate template or load sample data to begin positioning student names.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bulk Generation Progress Overlay Card -->
+      <div class="card progress-card" id="progressCard" style="display: none;">
+        <div class="spinner"></div>
+        <div class="progress-stats" id="progressPercentText">0%</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+        <div class="progress-subtitle" id="progressStatsText">0 / 0 certificates</div>
+        <p id="progressStatusText" style="font-size: 0.875rem; color: var(--text-muted);">Generating certificates in high quality...</p>
+        <button class="btn btn-secondary btn-sm" id="cancelGenerationBtn">Cancel Generation</button>
+      </div>
+
+      <!-- Completion Screen -->
+      <div class="card completion-card" id="completionCard" style="display: none;">
+        <div class="success-badge-icon">✓</div>
+        <h2 style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700;">Certificates Generated!</h2>
+        <p style="color: var(--text-muted); max-width: 480px;" id="completionCountText">
+          All certificates were created successfully and bundled into a ZIP file.
+        </p>
+
+        <div class="completion-actions">
+          <button class="btn btn-primary btn-lg" id="downloadZipBtn">
+            ⬇ Download All as ZIP
+          </button>
+          <button class="btn btn-secondary btn-lg" id="generateAnotherBtn">
+            Generate Another Batch
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>🔒 100% Client-Side Processing. Student names and certificates are processed locally in your browser.</p>
+    </footer>
+
+    <!-- App Module Script -->
+    <script type="module" src="/script.js"></script>
+  </body>
+</html>

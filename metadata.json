@@ -1,0 +1,6 @@
+{
+  "name": "CertiFlow — Bulk Certificate Generator",
+  "description": "Create once. Certify everyone. Professional browser-based bulk certificate generator with native resolution output.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
